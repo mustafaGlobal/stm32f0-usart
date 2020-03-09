@@ -54,6 +54,16 @@ uint8_t read_USART1()
 	return 0;
 }
 
+uint8_t peak_USART1()
+{
+	if (rx_buffer.head != rx_buffer.tail)
+	{
+		uint8_t recived_char = rx_buffer.buffer[rx_buffer.tail];
+		return recived_char;
+	}
+	return 0;
+}
+
 void write_USART1(uint8_t c)
 {
 	uint8_t i = (tx_buffer.head + 1) % USART_BUFFER_SIZE;

@@ -16,6 +16,7 @@ typedef struct
 void init_USART1(uint32_t baudrate);
 
 uint8_t read_USART1(void);
+uint8_t peak_USART1(void);
 void write_USART1(uint8_t c);
 uint8_t available_USART1(void);
 
