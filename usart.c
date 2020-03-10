@@ -7,6 +7,7 @@ ring_buffer tx_buffer = {{0}, 0, 0};
 void USART1_IRQHandler(void);
 void print_base(long n, uint8_t base);
 void store_char(uint8_t c, ring_buffer *buffer);
+uint8_t peekNextDigit(void);
 
 void init_USART1(uint32_t baudrate)
 {
@@ -43,15 +44,35 @@ void store_char(uint8_t c, ring_buffer *buffer)
 	}
 }
 
-uint8_t read_USART1()
+int read_USART1()
 {
 	if (rx_buffer.head != rx_buffer.tail)
 	{
-		uint8_t recived_char = rx_buffer.buffer[rx_buffer.tail];
+		unsigned char recived_char = rx_buffer.buffer[rx_buffer.tail];
 		rx_buffer.tail = (rx_buffer.tail + 1) % USART_BUFFER_SIZE;
 		return recived_char;
 	}
-	return 0;
+	return -1;
+}
+
+void read_bytes_USART1(char *buffer, uint8_t length)
+{
+	uint8_t i;
+	for (i = 0; i < length; i++)
+	{
+		uint8_t c = read_USART1();
+		*buffer++ = c;
+	}
+}
+
+void read_string_USART1(char *buffer)
+{
+	int c = read_USART1();
+	while (c >= 0)
+	{
+		*buffer++ = (char)c;
+		c = read_USART1();
+	}
 }
 
 uint8_t peak_USART1()
@@ -64,6 +85,44 @@ uint8_t peak_USART1()
 	return 0;
 }
 
+uint8_t peekNextDigit()
+{
+	int c;
+	while (1)
+	{
+		c = peak_USART1();
+		if (c < 0 ||
+				c == '-' ||
+				(c >= '0' && c <= '9'))
+		{
+			return c;
+		}
+		read_USART1(); // discard non-numeric
+	}
+}
+
+long parseInt_USART1(void)
+{
+	uint8_t isNegative = 0;
+	long value = 0;
+	uint8_t c;
+
+	c = peekNextDigit();
+	do
+	{
+		if (c == '-')
+			isNegative = 1;
+		else if (c >= '0' && c <= '9') // is c a digit?
+			value = value * 10 + c - '0';
+		read_USART1(); // consume the character we got with peek
+		c = peak_USART1();
+	} while ((c >= '0' && c <= '9'));
+
+	if (isNegative)
+		value = -value;
+	return value;
+}
+
 void write_USART1(uint8_t c)
 {
 	uint8_t i = (tx_buffer.head + 1) % USART_BUFFER_SIZE;
@@ -72,11 +131,12 @@ void write_USART1(uint8_t c)
 	USART1->CR1 |= USART_CR1_TXEIE; // Enable USART TX interupt
 }
 
-void print_string_USART1(const uint8_t *s)
+void print_string_USART1(const char *str)
 {
-	while (*s)
+	uint8_t i = 0;
+	while (str[i])
 	{
-		write_USART1(*s++);
+		write_USART1(str[i++]);
 	}
 }
 

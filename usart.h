@@ -15,12 +15,15 @@ typedef struct
 
 void init_USART1(uint32_t baudrate);
 
-uint8_t read_USART1(void);
+int read_USART1(void);
+long parseInt_USART1(void);
+void read_bytes_USART1(char *buffer, uint8_t length);
+void read_string_USART1(char *buffer);
 uint8_t peak_USART1(void);
 void write_USART1(uint8_t c);
 uint8_t available_USART1(void);
 
-void print_string_USART1(const uint8_t *s);
+void print_string_USART1(const char *s);
 void print_number_USART1(long n);
 void print_bin_USART1(long n);
 void print_hex_USART1(long n);
